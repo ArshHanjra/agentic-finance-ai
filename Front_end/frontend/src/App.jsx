@@ -1,122 +1,271 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useState } from "react";
+import axios from "axios";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+} from "recharts";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [data, setData] = useState(null);
+
+  const [transactions, setTransactions] =
+    useState([]);
+
+  const [description, setDescription] =
+    useState("");
+
+  const [amount, setAmount] =
+    useState("");
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const analysisResponse =
+        await axios.get(
+          "http://127.0.0.1:8000/full-analysis"
+        );
+
+      setData(analysisResponse.data);
+
+      const transactionResponse =
+        await axios.get(
+          "http://127.0.0.1:8000/transactions"
+        );
+
+      setTransactions(
+        transactionResponse.data
+      );
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const addTransaction = async () => {
+    try {
+      await axios.post(
+        "http://127.0.0.1:8000/add-transaction",
+        {
+          description: description,
+          amount: parseFloat(amount),
+        }
+      );
+
+      setDescription("");
+      setAmount("");
+
+      fetchData();
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  if (!data) {
+    return (
+      <div
+        style={{
+          backgroundColor: "#111827",
+          color: "white",
+          minHeight: "100vh",
+          padding: "30px",
+        }}
+      >
+        <h1>Loading...</h1>
+      </div>
+    );
+  }
+
+  const chartData =
+    data.budget_plan.budget_analysis;
+
+  const COLORS = [
+    "#0088FE",
+    "#00C49F",
+    "#FFBB28",
+    "#FF8042",
+    "#A855F7",
+  ];
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
+    <div
+      style={{
+        padding: "30px",
+        fontFamily: "Arial",
+        backgroundColor: "#111827",
+        minHeight: "100vh",
+        color: "white",
+      }}
+    >
+      <h1>Agentic Finance AI Dashboard</h1>
+
+      <div
+        style={{
+          background: "#1F2937",
+          padding: "20px",
+          borderRadius: "10px",
+          marginTop: "20px",
+        }}
+      >
+        <h2>Add Transaction</h2>
+
+        <input
+          type="text"
+          placeholder="Description"
+          value={description}
+          onChange={(e) =>
+            setDescription(e.target.value)
+          }
+          style={{
+            padding: "10px",
+            marginRight: "10px",
+            width: "250px",
+            borderRadius: "5px",
+            border: "none",
+          }}
+        />
+
+        <input
+          type="number"
+          placeholder="Amount"
+          value={amount}
+          onChange={(e) =>
+            setAmount(e.target.value)
+          }
+          style={{
+            padding: "10px",
+            marginRight: "10px",
+            width: "120px",
+            borderRadius: "5px",
+            border: "none",
+          }}
+        />
+
         <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+          onClick={addTransaction}
+          style={{
+            padding: "10px 20px",
+            cursor: "pointer",
+            borderRadius: "5px",
+            border: "none",
+            background: "#2563EB",
+            color: "white",
+          }}
         >
-          Count is {count}
+          Add
         </button>
-      </section>
+      </div>
 
-      <div className="ticks"></div>
+      <div
+        style={{
+          background: "#1F2937",
+          padding: "20px",
+          borderRadius: "10px",
+          marginTop: "20px",
+        }}
+      >
+        <h2>AI Insights</h2>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        <p>{data.insights}</p>
+      </div>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <div
+        style={{
+          background: "#1F2937",
+          padding: "20px",
+          borderRadius: "10px",
+          marginTop: "20px",
+        }}
+      >
+        <h2>Forecast</h2>
+
+        <h3>
+          ₹{" "}
+          {
+            data.forecast
+              .predicted_next_month_spending
+          }
+        </h3>
+      </div>
+
+      <div
+        style={{
+          background: "#1F2937",
+          padding: "20px",
+          borderRadius: "10px",
+          marginTop: "20px",
+        }}
+      >
+        <h2>Budget Distribution</h2>
+
+        <PieChart width={500} height={400}>
+          <Pie
+            data={chartData}
+            dataKey="spent"
+            nameKey="category"
+            cx="50%"
+            cy="50%"
+            outerRadius={120}
+            label
+          >
+            {chartData.map(
+              (entry, index) => (
+                <Cell
+                  key={index}
+                  fill={
+                    COLORS[
+                      index % COLORS.length
+                    ]
+                  }
+                />
+              )
+            )}
+          </Pie>
+
+          <Tooltip />
+          <Legend />
+        </PieChart>
+      </div>
+
+      <div
+        style={{
+          background: "#1F2937",
+          padding: "20px",
+          borderRadius: "10px",
+          marginTop: "20px",
+        }}
+      >
+        <h2>Transaction History</h2>
+
+        {transactions.map(
+          (item, index) => (
+            <div
+              key={index}
+              style={{
+                padding: "10px",
+                borderBottom:
+                  "1px solid gray",
+              }}
+            >
+              <p>
+                {item.description}
+              </p>
+
+              <p>
+                ₹ {item.amount}
+              </p>
+            </div>
+          )
+        )}
+      </div>
+    </div>
+  );
 }
 
-export default App
+export default App;

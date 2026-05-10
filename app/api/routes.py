@@ -1,54 +1,147 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from pydantic import BaseModel
-from agents.data_agent import fetch_transactions
-from agents.rag_agent import ask_finance_question
-from services.transaction_service import process_transaction
-from agents.orchestrator import run_financial_analysis
-from db.database import get_connection
-
-class QuestionRequest(BaseModel):
-
-    question: str
+from ml.ml_model import (
+    predict_category
+)
 
 router = APIRouter()
 
+# --------------------------------
+# Temporary in-memory storage
+# --------------------------------
+transactions = []
 
-class Transaction(BaseModel):
-    amount: float
+
+# --------------------------------
+# Request schema
+# --------------------------------
+class TransactionCreate(BaseModel):
     description: str
+    amount: float
 
 
-@router.post("/transaction")
-def add_transaction(transaction: Transaction):
+# --------------------------------
+# Add Transaction Route
+# --------------------------------
+@router.post("/add-transaction")
+def add_transaction(
+    transaction: TransactionCreate
+):
 
-    result = process_transaction(transaction)
+    # Predict category using ML model
+    predicted_category = (
+        predict_category(
+            transaction.description
+        )
+    )
 
-    return result
+    # Create transaction object
+    new_transaction = {
+        "description":
+        transaction.description,
 
+        "amount":
+        transaction.amount,
 
-@router.get("/insights")
-def get_insights():
+        "category":
+        predicted_category
+    }
 
-    result = run_financial_analysis()
-
-    return result
-
-
-@router.post("/ask-ai")
-def ask_ai(request: QuestionRequest):
-
-    # Fetch all transactions
-    transactions = fetch_transactions()
-
-    # Ask AI with transaction context
-    answer = ask_finance_question(
-        request.question,
-        transactions
+    # Save transaction
+    transactions.append(
+        new_transaction
     )
 
     return {
-        "question": request.question,
-        "answer": answer
+        "message":
+        "Transaction saved",
+
+        "transaction":
+        new_transaction
+    }
+
+
+# --------------------------------
+# Get All Transactions
+# --------------------------------
+@router.get("/transactions")
+def get_transactions():
+
+    return transactions
+
+
+# --------------------------------
+# Full Dashboard Analysis
+# --------------------------------
+@router.get("/full-analysis")
+def full_analysis():
+
+    # Total spending
+    total_spent = sum(
+        item["amount"]
+        for item in transactions
+    )
+
+    # Category-wise totals
+    category_totals = {}
+
+    for item in transactions:
+
+        category = (
+            item["category"]
+        )
+
+        if category not in (
+            category_totals
+        ):
+            category_totals[
+                category
+            ] = 0
+
+        category_totals[
+            category
+        ] += item["amount"]
+
+    # Budget chart data
+    budget_analysis = [
+
+        {
+            "category": key,
+            "spent": value
+        }
+
+        for key, value
+        in category_totals.items()
+    ]
+
+    # AI insight text
+    insight_text = (
+        f"Your total spending "
+        f"is ₹{total_spent}. "
+        f"You are spending mostly "
+        f"on "
+        f"{max(category_totals, key=category_totals.get) if category_totals else 'No Category'}."
+    )
+
+    # Forecast
+    forecast_amount = round(
+        total_spent * 1.2,
+        2
+    )
+
+    return {
+
+        "insights":
+        insight_text,
+
+        "forecast": {
+            "predicted_next_month_spending":
+            forecast_amount
+        },
+
+        "budget_plan": {
+            "budget_analysis":
+            budget_analysis
+        }
     }
