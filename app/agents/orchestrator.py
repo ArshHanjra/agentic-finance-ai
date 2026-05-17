@@ -7,23 +7,38 @@ from agents.budget_agent import generate_budget_plan
 
 def run_financial_analysis():
 
-    # Fetch transactions
     transactions = fetch_transactions()
 
-    # AI insight generation
-    insights = generate_ai_insight(transactions)
+    insight_data = generate_ai_insight(
+        transactions
+    )
 
-    # Spending warnings
-    warnings = analyze_spending_behavior(transactions)
+    warnings = analyze_spending_behavior(
+        transactions
+    )
 
-    # Future spending prediction
-    forecast = forecast_spending(transactions)
-    
-    budget_plan = generate_budget_plan(transactions)
+    forecast = forecast_spending(
+        transactions
+    )
+
+    budget_plan = generate_budget_plan(
+        transactions
+    )
 
     return {
-        "insights": insights,
+        "insights": insight_data.get(
+            "ai_summary",
+            ""
+        ),
+
+        "local_analysis": insight_data.get(
+            "local_analysis",
+            {}
+        ),
+
         "warnings": warnings,
+
         "forecast": forecast,
-        "budget_plan": budget_plan
+
+        "budget_plan": budget_plan,
     }
